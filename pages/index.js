@@ -1,11 +1,7 @@
 import { Editor, Frame, Element } from '@craftjs/core';
 import { Typography, Paper, Grid, makeStyles } from '@material-ui/core';
-import parse, {
-  domToReact,
-  htmlToDOM,
-  Element as ParserElement,
-} from 'html-react-parser';
-import React, { useEffect, useState, useRef } from 'react';
+import parse, { domToReact, Element as ParserElement } from 'html-react-parser';
+import React from 'react';
 // import ReactHtmlParser from 'react-html-parser';
 import { v4 } from 'uuid';
 
@@ -25,15 +21,22 @@ const useStyles = makeStyles(() => ({
 }));
 export default function App() {
   const classes = useStyles();
-  const [html, setHtml] = useState(
-    `<div class="blue" id="root">
+  // const [html, setHtml] = useState(
+  //   `<div class="blue" id="root">
+  //     <button>Hello</button>
+  //     <div>
+  //       <h1>Bro</h1>
+  //       <h2>Jovie</h2>
+  //     </div>
+  //   </div>`
+  // );
+  const html = `<div class="blue" id="root">
       <button>Hello</button>
       <div>
         <h1>Bro</h1>
         <h2>Jovie</h2>
       </div>
-    </div>`
-  );
+    </div>`;
 
   const options = {
     replace: (domNode) => {

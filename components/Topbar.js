@@ -13,11 +13,7 @@ import {
   Snackbar,
 } from '@material-ui/core';
 import copy from 'copy-to-clipboard';
-import parse, {
-  domToReact,
-  htmlToDOM,
-  Element as ParserElement,
-} from 'html-react-parser';
+import parse, { domToReact, Element as ParserElement } from 'html-react-parser';
 import lz from 'lzutf8';
 import React, { useState } from 'react';
 import { v4 } from 'uuid';
@@ -213,8 +209,6 @@ export const Topbar = () => {
             color="secondary"
             onClick={() => {
               const json = query.serialize();
-              console.log(query);
-              console.log(query.serialize());
               copy(lz.encodeBase64(lz.compress(json)));
               setSnackbarMessage('State copied to clipboard');
             }}
