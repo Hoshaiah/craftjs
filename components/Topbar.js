@@ -13,11 +13,16 @@ import {
   Snackbar,
 } from '@material-ui/core';
 import copy from 'copy-to-clipboard';
+import parse, {
+  domToReact,
+  htmlToDOM,
+  Element as ParserElement,
+} from 'html-react-parser';
 import lz from 'lzutf8';
 import React, { useState } from 'react';
+import { v4 } from 'uuid';
 
-export const Topbar = (props) => {
-  const { test, setHtml } = props;
+export const Topbar = () => {
   const { actions, query, enabled, canUndo, canRedo } = useEditor(
     (state, query) => ({
       enabled: state.options.enabled,
@@ -27,9 +32,139 @@ export const Topbar = (props) => {
   );
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogHtmlOpen, setDialogHtmlOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState();
 
   const [stateToLoad, setStateToLoad] = useState(null);
+
+  const options = {
+    replace: (domNode) => {
+      if (
+        domNode instanceof ParserElement &&
+        ['h2', 'h1'].includes(domNode.name)
+      ) {
+        domNode['id'] = v4();
+        return (
+          <div
+            data_id={domNode['id']}
+            data={JSON.stringify({
+              [`${domNode.id}`]: {
+                type: {
+                  resolvedName: 'Text',
+                },
+                isCanvas: false,
+                props: {
+                  text: domNode.firstChild && domNode.firstChild.data,
+                  fontSize: 50,
+                  size: 'small',
+                  'data-cy': 'frame-container-text',
+                },
+                displayName: 'Text',
+                custom: {},
+                parent: domNode.parent && domNode.parent.id,
+                hidden: false,
+                nodes: [],
+                linkedNodes: {},
+              },
+            })}
+          />
+        );
+      } else if (
+        domNode instanceof ParserElement &&
+        ['div'].includes(domNode.name)
+      ) {
+        if (domNode.attribs.id === 'root') {
+          domNode['id'] = 'ROOT';
+        } else {
+          domNode['id'] = v4();
+        }
+        return (
+          <div
+            data_id={domNode['id']}
+            data={JSON.stringify({
+              [`${domNode.id}`]: {
+                type: {
+                  resolvedName: 'Container',
+                },
+                isCanvas: true,
+                props: {
+                  background: '#eeeeee',
+                  padding: 5,
+                  'data-cy': 'root-container',
+                },
+                displayName: 'Container',
+                custom: {},
+                parent: domNode.parent && domNode.parent.id,
+                hidden: false,
+                nodes: [],
+                linkedNodes: {},
+              },
+            })}
+          >
+            {domToReact(domNode.children, options)}
+          </div>
+        );
+      } else if (
+        domNode instanceof ParserElement &&
+        ['button'].includes(domNode.name)
+      ) {
+        domNode['id'] = v4();
+        return (
+          <div
+            data_id={domNode['id']}
+            data={JSON.stringify({
+              [`${domNode.id}`]: {
+                type: {
+                  resolvedName: 'Button',
+                },
+                isCanvas: false,
+                props: {
+                  text: domNode.firstChild && domNode.firstChild.data,
+                  size: 'small',
+                  variant: 'contained',
+                  color: 'primary',
+                  'data-cy': 'frame-button',
+                },
+                displayName: 'Button',
+                custom: {},
+                parent: domNode.parent && domNode.parent.id,
+                hidden: false,
+                nodes: [],
+                linkedNodes: {},
+              },
+            })}
+          />
+        );
+      }
+    },
+  };
+
+  const elementsToJson = (element, output = {}) => {
+    if (React.isValidElement(element)) {
+      React.Children.forEach(element.props.children, (child) =>
+        elementsToJson(child, output)
+      );
+      const nodesData = React.Children.map(
+        element.props.children,
+        (child) => child.props && child.props.data_id
+      );
+
+      let jsonData = JSON.parse(element.props.data ? element.props.data : '{}');
+      const firstObjectFromJson1 = jsonData[Object.keys(jsonData)[0]];
+
+      output[element.props.data_id] = {
+        ...firstObjectFromJson1,
+        nodes: nodesData,
+      };
+    }
+
+    return output;
+  };
+
+  // const parsedElements = parse(html, options);
+  // const jsonElements = elementsToJson(parsedElements);
+
+  // console.log(jsonElements);
 
   return (
     <Box px={1} py={1} mt={3} mb={1} bgcolor="#cbe8e7">
@@ -93,8 +228,18 @@ export const Topbar = (props) => {
             variant="outlined"
             color="secondary"
             onClick={() => setDialogOpen(true)}
+            style={{ marginRight: '10px' }}
           >
             Load
+          </MaterialButton>
+          <MaterialButton
+            className="load-state-btn"
+            size="small"
+            variant="outlined"
+            color="secondary"
+            onClick={() => setDialogHtmlOpen(true)}
+          >
+            Load Html
           </MaterialButton>
           <Dialog
             open={dialogOpen}
@@ -123,166 +268,52 @@ export const Topbar = (props) => {
               <MaterialButton
                 onClick={() => {
                   setDialogOpen(false);
-                  // console.log(lz.decodeBase64({"5OIsFZrqEA":{"type":{"resolvedName":"Text"},"isCanvas":false,"props":{"text":"Jovie","fontSize":50,"size":"small","data-cy":"frame-container-text"},"displayName":"Text","custom":{},"parent":"a6c2177e-e07f-4e30-aa9d-352ede8dbcd6","hidden":false,"nodes":[],"linkedNodes":{}}}))
-                  // const json = lz.encodeBase64(lz.compress({"5OIsFZrqEA":{"type":{"resolvedName":"Text"},"isCanvas":false,"props":{"text":"Jovie","fontSize":50,"size":"small","data-cy":"frame-container-text"},"displayName":"Text","custom":{},"parent":"a6c2177e-e07f-4e30-aa9d-352ede8dbcd6","hidden":false,"nodes":[],"linkedNodes":{}}}
-                  // )
-                  // );
-                  // const toLoad = lz.encodeBase64(lz.compress(`{"5OIsFZrqEA":{"type":{"resolvedName":"Text"},"isCanvas":false,"props":{"text":"Jovie","fontSize":50,"size":"small","data-cy":"frame-container-text"},"displayName":"Text","custom":{},"parent":"a6c2177e-e07f-4e30-aa9d-352ede8dbcd6","hidden":false,"nodes":[],"linkedNodes":{}}}`))
-                  // console.log(toLoad);
-
-                  actions.deserialize({
-                    ROOT: {
-                      type: {
-                        resolvedName: 'Container',
-                      },
-                      isCanvas: true,
-                      props: {
-                        background: '#eeeeee',
-                        padding: 5,
-                        'data-cy': 'root-container',
-                      },
-                      displayName: 'Container',
-                      custom: {},
-                      hidden: false,
-                      nodes: ['A'],
-                      linkedNodes: {},
-                    },
-
-                  'A': {
-                    type: { resolvedName: 'Text' },
-                    isCanvas: false,
-                    props: {
-                      text: 'Hoshasdf',
-                      fontSize: 50,
-                      size: 'small',
-                      'data-cy': 'frame-container-text',
-                    },
-                    displayName: 'Text',
-                    custom: {},
-                    parent: 'ROOT',
-                    hidden: false,
-                    nodes: [],
-                    linkedNodes: {},
-                  },
-                  });
-                  // setHtml(`${stateToLoad}`);
-                  // console.log(stateToLoad);
-
-
-
-                  // actions.deserialize({
-                  //   ROOT: {
-                  //     type: {
-                  //       resolvedName: 'Container',
-                  //     },
-                  //     isCanvas: true,
-                  //     props: {
-                  //       background: '#eeeeee',
-                  //       padding: 5,
-                  //       'data-cy': 'root-container',
-                  //     },
-                  //     displayName: 'Container',
-                  //     custom: {},
-                  //     hidden: false,
-                  //     nodes: ['5OIsFZrqEA'],
-                  //     linkedNodes: {},
-                  //   },
-                  //   // DDXfOPlC9v: {
-                  //   //   type: {
-                  //   //     resolvedName: 'Container',
-                  //   //   },
-                  //   //   isCanvas: true,
-                  //   //   props: {
-                  //   //     background: '#eeeeee',
-                  //   //     padding: 5,
-                  //   //     'data-cy': 'root-container',
-                  //   //   },
-                  //   //   displayName: 'Container',
-                  //   //   custom: {},
-                  //   //   parent: 'ROOT',
-                  //   //   hidden: false,
-                  //   //   nodes: ['sCZ_5xpaYD', '95_x9Nygbm'],
-                  //   //   linkedNodes: {},
-                  //   // },
-                  //   // sCZ_5xpaYD: {
-                  //   //   type: {
-                  //   //     resolvedName: 'Button',
-                  //   //   },
-                  //   //   isCanvas: false,
-                  //   //   props: {
-                  //   //     size: 'small',
-                  //   //     variant: 'contained',
-                  //   //     color: 'primary',
-                  //   //     text: 'Hello',
-                  //   //     'data-cy': 'frame-button',
-                  //   //   },
-                  //   //   displayName: 'Button',
-                  //   //   custom: {},
-                  //   //   parent: 'DDXfOPlC9v',
-                  //   //   hidden: false,
-                  //   //   nodes: [],
-                  //   //   linkedNodes: {},
-                  //   // },
-                  //   // '95_x9Nygbm': {
-                  //   //   type: {
-                  //   //     resolvedName: 'Container',
-                  //   //   },
-                  //   //   isCanvas: true,
-                  //   //   props: {
-                  //   //     background: '#eeeeee',
-                  //   //     padding: 5,
-                  //   //     'data-cy': 'root-container',
-                  //   //   },
-                  //   //   displayName: 'Container',
-                  //   //   custom: {},
-                  //   //   parent: 'DDXfOPlC9v',
-                  //   //   hidden: false,
-                  //   //   nodes: ['B6DJOmfuwU', '5OIsFZrqEA'],
-                  //   //   linkedNodes: {},
-                  //   // },
-                  //   // B6DJOmfuwU: {
-                  //   //   type: {
-                  //   //     resolvedName: 'Text',
-                  //   //   },
-                  //   //   isCanvas: false,
-                  //   //   props: {
-                  //   //     text: 'Bro',
-                  //   //     fontSize: 20,
-                  //   //     size: 'small',
-                  //   //     'data-cy': 'frame-container-text',
-                  //   //   },
-                  //   //   displayName: 'Text',
-                  //   //   custom: {},
-                  //   //   parent: '95_x9Nygbm',
-                  //   //   hidden: false,
-                  //   //   nodes: [],
-                  //   //   linkedNodes: {},
-                  //   // },
-                  //   '5OIsFZrqEA': {
-                  //     type: {
-                  //       resolvedName: 'Text',
-                  //     },
-                  //     isCanvas: false,
-                  //     props: {
-                  //       text: 'Jovie',
-                  //       fontSize: 50,
-                  //       size: 'small',
-                  //       'data-cy': 'frame-container-text',
-                  //     },
-                  //     displayName: 'Text',
-                  //     custom: {},
-                  //     parent: 'ROOT',
-                  //     hidden: false,
-                  //     nodes: [],
-                  //     linkedNodes: {},
-                  //   },
-                  // });
+                  const json = lz.decompress(lz.decodeBase64(stateToLoad));
+                  actions.deserialize(json);
                   setSnackbarMessage('State loaded');
                 }}
                 color="primary"
                 autoFocus
               >
                 Load
+              </MaterialButton>
+            </DialogActions>
+          </Dialog>
+          <Dialog
+            open={dialogHtmlOpen}
+            onClose={() => setDialogHtmlOpen(false)}
+            fullWidth
+            maxWidth="md"
+          >
+            <DialogTitle id="alert-dialog-title">Load HTML</DialogTitle>
+            <DialogContent>
+              <TextField
+                multiline
+                fullWidth
+                placeholder="Insert HTML to load"
+                size="small"
+                value={stateToLoad || ''}
+                onChange={(e) => setStateToLoad(e.target.value)}
+              />
+            </DialogContent>
+            <DialogActions>
+              <MaterialButton
+                onClick={() => setDialogHtmlOpen(false)}
+                color="primary"
+              >
+                Cancel
+              </MaterialButton>
+              <MaterialButton
+                onClick={() => {
+                  setDialogHtmlOpen(false);
+                  const json = elementsToJson(parse(stateToLoad, options));
+                  actions.deserialize(json);
+                  setSnackbarMessage('State loaded');
+                }}
+                color="primary"
+                autoFocus
+              >
+                Load Html
               </MaterialButton>
             </DialogActions>
           </Dialog>

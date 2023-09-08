@@ -9,7 +9,6 @@ import React, { useEffect, useState, useRef } from 'react';
 // import ReactHtmlParser from 'react-html-parser';
 import { v4 } from 'uuid';
 
-
 import { SettingsPanel } from '../components/SettingsPanel';
 import { Toolbox } from '../components/Toolbox';
 import { Topbar } from '../components/Topbar';
@@ -27,7 +26,7 @@ const useStyles = makeStyles(() => ({
 export default function App() {
   const classes = useStyles();
   const [html, setHtml] = useState(
-    `<div class="blue">
+    `<div class="blue" id="root">
       <button>Hello</button>
       <div>
         <h1>Bro</h1>
@@ -35,46 +34,15 @@ export default function App() {
       </div>
     </div>`
   );
-  const [test, setTest] = useState({});
-  // const [html, setHtml] = useState('');]
-
-  const handleOnClick = () => {
-    setHtml(`<p>hey</p>`);
-    setTest(<>it changed</>);
-  };
-  console.log(html)
 
   const options = {
     replace: (domNode) => {
-      console.log(domNode);
       if (
         domNode instanceof ParserElement &&
-        ['h2'].includes(domNode.name)
-        // domNode.attribs.class === 'remove'
+        ['h2', 'h1', 'h3', 'p'].includes(domNode.name)
       ) {
-        console.log(JSON.stringify({
-          "5OIsFZrqEA": {
-            "type": {
-              "resolvedName": "Text"
-            },
-            "isCanvas": false,
-            "props": {
-              "text": domNode.firstChild && domNode.firstChild.data,
-              "fontSize": 50,
-              "size": "small",
-              "data-cy": "frame-container-text"
-            },
-            "displayName": "Text",
-            "custom": {},
-            "parent": domNode.parent && domNode.parent.id,
-            "hidden": false,
-            "nodes": [],
-            "linkedNodes": {}
-          },
-        }));
         domNode['id'] = v4();
         return (
-          // <h1>BRO</h1>
           <Text
             size="small"
             text={domNode.firstChild && domNode.firstChild.data}
@@ -112,7 +80,6 @@ export default function App() {
       }
     },
   };
-  // const [htmlToLoad, setHtmlToLoad]= useState(parse(html, options));
 
   return (
     <div style={{ margin: '0 auto', width: '800px' }}>
@@ -129,24 +96,23 @@ export default function App() {
           CardBottom,
         }}
       >
-        <Topbar setHtml={setHtml} />
-        <button onClick={handleOnClick}>change html</button>
+        <Topbar />
         <Grid container spacing={5} style={{ paddingTop: '10px' }}>
           <Grid item xs>
             <Frame>
-              <Element
+              {/* <Element
                 canvas
                 is={Container}
                 padding={5}
                 background="#eeeeee"
                 data-cy="root-container"
-              >
-                {parse(html, options)}
-                {/* {parse(html, options)} */}
-                {/* <Card data-cy="frame-card" /> */}
-                {/* <Button text="Click me" size="small" data-cy="frame-button" /> */}
-                {/* <Text fontSize={20} text="Hi world!" data-cy="frame-text" /> */}
-                {/* <Element
+              > */}
+              {parse(html, options)}
+              {/* {parse(html, options)} */}
+              {/* <Card data-cy="frame-card" /> */}
+              {/* <Button text="Click me" size="small" data-cy="frame-button" /> */}
+              {/* <Text fontSize={20} text="Hi world!" data-cy="frame-text" /> */}
+              {/* <Element
                   canvas
                   is={Container}
                   padding={6}
@@ -159,7 +125,7 @@ export default function App() {
                     data-cy="frame-container-text"
                   />
                 </Element> */}
-              </Element>
+              {/* </Element> */}
             </Frame>
           </Grid>
           <Grid item xs={4}>
