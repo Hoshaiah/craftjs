@@ -17,6 +17,7 @@ import parse, { domToReact, Element as ParserElement } from 'html-react-parser';
 import lz from 'lzutf8';
 import React, { useState } from 'react';
 import { v4 } from 'uuid';
+import parseCSS from 'inline-style-parser';
 
 export const Topbar = () => {
   const { actions, query, enabled, canUndo, canRedo } = useEditor(
@@ -32,6 +33,20 @@ export const Topbar = () => {
   const [snackbarMessage, setSnackbarMessage] = useState();
 
   const [stateToLoad, setStateToLoad] = useState(null);
+
+  const getInlineStyle = (inlineStyle, attribute) => {
+    if(inlineStyle) {
+      const parsedCSS = parseCSS(inlineStyle);
+      let attributeValue
+      parsedCSS.forEach((attrib) => {
+        if(attrib.property == attribute) {
+          console.log(attrib.value);
+          attributeValue = attrib.value;
+        }
+      });
+      return attributeValue;
+    };
+  }
 
   const options = {
     replace: (domNode) => {
@@ -51,7 +66,7 @@ export const Topbar = () => {
                 isCanvas: false,
                 props: {
                   text: domNode.firstChild && domNode.firstChild.data,
-                  fontSize: 50,
+                  fontSize: getInlineStyle(domNode.attribs.style, 'font-size') || 50,
                   size: 'small',
                   'data-cy': 'frame-container-text',
                 },
